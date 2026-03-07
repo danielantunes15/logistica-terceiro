@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal do Parceiro | Logística BEL</title>
+    <title>Torre de Controle | Portal do Parceiro BEL</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,10 +15,10 @@
     <div id="login-container" class="login-overlay">
         <div class="login-box glass-panel">
             <div class="logo-area" style="justify-content: center; margin-bottom: 20px;">
-                <div class="icon-circle"><i class="ph-fill ph-handshake"></i></div>
+                <div class="icon-circle"><i class="ph-fill ph-target"></i></div>
             </div>
-            <h2 style="text-align: center; margin-bottom: 5px; color: var(--text-main);">Acesso Restrito</h2>
-            <p style="text-align: center; color: var(--text-muted); margin-bottom: 25px; font-size: 0.95rem;">Portal de Gestão de Parceiros BEL</p>
+            <h2 style="text-align: center; margin-bottom: 5px; color: var(--text-main);">Torre de Controle Logístico</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 25px; font-size: 0.95rem;">Acesso do Parceiro de Transporte</p>
             
             <form id="form-login">
                 <div class="input-group" style="margin-bottom: 15px;">
@@ -31,7 +32,7 @@
                     <input type="password" id="login-token" placeholder="Digite a senha fornecida" required>
                 </div>
                 <button type="submit" class="btn-primary full-width">
-                    <i class="ph-fill ph-sign-in"></i> Entrar no Sistema
+                    <i class="ph-fill ph-sign-in"></i> Entrar na Operação
                 </button>
             </form>
         </div>
@@ -41,8 +42,8 @@
         <header class="header">
             <div class="header-content">
                 <div class="logo-area">
-                    <div class="icon-circle small"><i class="ph-fill ph-handshake"></i></div>
-                    <h1>Portal do Parceiro</h1>
+                    <div class="icon-circle small"><i class="ph-fill ph-target"></i></div>
+                    <h1>Gestão de Frota e Tráfego</h1>
                 </div>
                 <div class="user-info">
                     <div class="user-badge">
@@ -57,6 +58,30 @@
         </header>
 
         <main class="container">
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);"><i class="ph-fill ph-truck"></i></div>
+                    <div>
+                        <h4 id="kpi-frota-ativa">0</h4>
+                        <p>Veículos em Operação</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);"><i class="ph-fill ph-warning-circle"></i></div>
+                    <div>
+                        <h4 id="kpi-frota-pendente">0</h4>
+                        <p>Veículos Pendentes</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(37, 99, 235, 0.1); color: var(--primary-color);"><i class="ph-fill ph-users-three"></i></div>
+                    <div>
+                        <h4 id="kpi-equipe-total">0</h4>
+                        <p>Colaboradores Ativos</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="tabs-container">
                 <button class="tab-btn active" data-tab="frota-pendente"><i class="ph-fill ph-warning-circle"></i> Pendências Frota</button>
                 <button class="tab-btn" data-tab="frota-ativa"><i class="ph-fill ph-check-circle"></i> Frota Ativa</button>
@@ -66,15 +91,15 @@
 
             <div id="frota-pendente" class="tab-content active">
                 <div class="card premium-card" style="margin-bottom: 24px;">
-                    <h2><i class="ph-fill ph-plus-circle"></i> Cadastrar Novo Veículo / Máquina</h2>
-                    <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.9rem;">Preencha a placa e anexe os documentos. O código interno será gerado pela Usina após a vistoria.</p>
+                    <h2><i class="ph-fill ph-plus-circle"></i> Homologar Novo Veículo / Máquina</h2>
+                    <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.9rem;">Preencha a placa e anexe os documentos para vistoria da usina.</p>
                     <form id="form-equipamento">
                         <div class="form-grid">
                             <div class="input-group">
                                 <label>Categoria / Configuração</label>
                                 <select id="eq-categoria" required>
                                     <option value="" disabled selected>Selecione o tipo...</option>
-                                    <optgroup label="Rodoviário (Canavieiro)">
+                                    <optgroup label="Transporte (Ex: Cana / Eucalipto)">
                                         <option value="Caminhão Simples">Caminhão Simples (Sem Reboque)</option>
                                         <option value="Rodotrem">Rodotrem (Cavalo + 1 Reboque)</option>
                                         <option value="Treminhão">Treminhão (Cavalo + 2 Reboques)</option>
@@ -104,36 +129,37 @@
                                 <div class="input-group"><label>Placa do Reboque 2</label><input type="text" id="eq-reb2-placa" placeholder="Ex: DEF-8888"></div>
                                 <div class="input-group"><label>Documento Reboque 2</label><input type="file" id="eq-reb2-doc" accept=".pdf,image/*"></div>
                             </div>
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;"><i class="ph-fill ph-info"></i> O veículo só irá para Vistoria da Usina se todas as placas e documentos dos reboques forem enviados.</p>
                         </div>
 
                         <div class="checklist">
-                            <label><input type="checkbox" required> Confirmo que as manutenções e itens de segurança estão em dia para operação.</label>
+                            <label><input type="checkbox" required> Confirmo que as manutenções preventivas e itens de segurança estão rigorosamente em dia para a operação.</label>
                         </div>
-                        <button type="submit" class="btn-primary"><i class="ph-fill ph-paper-plane-right"></i> Enviar Cadastro</button>
+                        <button type="submit" class="btn-primary" id="btn-submit-equipamento"><i class="ph-fill ph-paper-plane-right"></i> Enviar para Vistoria</button>
                     </form>
                 </div>
 
                 <div class="card">
-                    <h3 class="section-title" style="color: var(--warning);"><i class="ph-fill ph-clock"></i> Veículos Aguardando Liberação</h3>
-                    <div id="lista-frota-pendente" class="modern-list">
-                        <div class="empty-state">Carregando dados...</div>
+                    <div class="section-header-flex">
+                        <h3 class="section-title" style="color: var(--warning); margin:0;"><i class="ph-fill ph-clock"></i> Veículos Aguardando Liberação</h3>
+                        <input type="text" id="busca-frota-pendente" class="search-input" placeholder="Buscar por placa...">
                     </div>
+                    <div id="lista-frota-pendente" class="modern-list" style="margin-top: 15px;"></div>
                 </div>
             </div>
 
             <div id="frota-ativa" class="tab-content">
                 <div class="card">
-                    <h3 class="section-title" style="color: var(--success);"><i class="ph-fill ph-check-circle"></i> Frota Aprovada e Operando</h3>
-                    <div id="lista-frota-ativa" class="modern-list">
-                        <div class="empty-state">Carregando dados...</div>
+                    <div class="section-header-flex">
+                        <h3 class="section-title" style="color: var(--success); margin:0;"><i class="ph-fill ph-check-circle"></i> Frota Aprovada e Operando</h3>
+                        <input type="text" id="busca-frota-ativa" class="search-input" placeholder="Buscar por placa...">
                     </div>
+                    <div id="lista-frota-ativa" class="modern-list" style="margin-top: 15px;"></div>
                 </div>
             </div>
 
             <div id="equipe-pendente" class="tab-content">
                 <div class="card premium-card" style="margin-bottom: 24px;">
-                    <h2><i class="ph-fill ph-user-plus"></i> Solicitar Integração de Colaborador</h2>
+                    <h2><i class="ph-fill ph-user-plus"></i> Integração de Novo Colaborador</h2>
                     <form id="form-funcionario">
                         <div class="form-grid">
                             <div class="input-group"><label>Nome Completo</label><input type="text" id="func-nome" required></div>
@@ -141,31 +167,33 @@
                             <div class="input-group">
                                 <label>Cargo / Função</label>
                                 <select id="func-cargo" required>
-                                    <option value="Motorista">Motorista Canavieiro</option>
-                                    <option value="Operador">Operador de Máquina</option>
-                                    <option value="Apoio">Apoio / Comboio</option>
+                                    <option value="Motorista Canavieiro">Motorista Canavieiro</option>
+                                    <option value="Motorista Florestal">Motorista Florestal</option>
+                                    <option value="Operador de Máquina">Operador de Máquina</option>
+                                    <option value="Controlador de Tráfego">Controlador de Tráfego</option>
+                                    <option value="Apoio Logístico">Apoio Logístico / Comboio</option>
                                 </select>
                             </div>
                             <div class="input-group"><label>Documento (CNH / RG)</label><input type="file" id="func-doc" accept=".pdf,image/*" required></div>
                         </div>
-                        <button type="submit" class="btn-primary" style="margin-top: 20px;"><i class="ph-fill ph-paper-plane-right"></i> Solicitar Integração</button>
+                        <button type="submit" class="btn-primary" id="btn-submit-func" style="margin-top: 20px;"><i class="ph-fill ph-paper-plane-right"></i> Solicitar Integração</button>
                     </form>
                 </div>
 
                 <div class="card">
-                    <h3 class="section-title" style="color: var(--warning);"><i class="ph-fill ph-clock"></i> Equipe Aguardando Integração</h3>
-                    <div id="lista-equipe-pendente" class="modern-list">
-                        <div class="empty-state">Carregando dados...</div>
+                    <div class="section-header-flex">
+                        <h3 class="section-title" style="color: var(--warning); margin:0;"><i class="ph-fill ph-clock"></i> Equipe Aguardando Integração</h3>
                     </div>
+                    <div id="lista-equipe-pendente" class="modern-list" style="margin-top: 15px;"></div>
                 </div>
             </div>
 
             <div id="equipe-ativa" class="tab-content">
                 <div class="card">
-                    <h3 class="section-title" style="color: var(--success);"><i class="ph-fill ph-check-circle"></i> Equipe Aprovada</h3>
-                    <div id="lista-equipe-ativa" class="modern-list">
-                        <div class="empty-state">Carregando dados...</div>
+                    <div class="section-header-flex">
+                        <h3 class="section-title" style="color: var(--success); margin:0;"><i class="ph-fill ph-check-circle"></i> Equipe Aprovada</h3>
                     </div>
+                    <div id="lista-equipe-ativa" class="modern-list" style="margin-top: 15px;"></div>
                 </div>
             </div>
         </main>
@@ -174,7 +202,7 @@
     <div id="modal-edicao" class="modal-overlay" style="display: none;">
         <div class="modal-box">
             <div class="modal-header">
-                <h3><i class="ph-fill ph-pencil-simple"></i> Editar / Completar Informações</h3>
+                <h3><i class="ph-fill ph-pencil-simple"></i> Atualizar Informações</h3>
                 <button class="btn-icon close-modal"><i class="ph ph-x"></i></button>
             </div>
             <form id="form-edicao">
@@ -194,20 +222,14 @@
                 <div id="modal-edit-reboques" style="display:none; background: #F8FAFC; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;">
                     <h4 style="font-size: 0.9rem; margin-bottom: 10px; color: var(--text-muted);">Completar Placas Faltantes</h4>
                     <div class="form-grid">
-                        <div class="input-group" id="grupo-edit-reb1" style="display: none;">
-                            <label>Placa Reboque 1</label>
-                            <input type="text" id="edit-reb1">
-                        </div>
-                        <div class="input-group" id="grupo-edit-reb2" style="display: none;">
-                            <label>Placa Reboque 2</label>
-                            <input type="text" id="edit-reb2">
-                        </div>
+                        <div class="input-group" id="grupo-edit-reb1" style="display: none;"><label>Placa Reboque 1</label><input type="text" id="edit-reb1"></div>
+                        <div class="input-group" id="grupo-edit-reb2" style="display: none;"><label>Placa Reboque 2</label><input type="text" id="edit-reb2"></div>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
                     <button type="button" class="btn-outline close-modal">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar Alterações</button>
+                    <button type="submit" class="btn-primary" id="btn-salvar-edicao">Salvar Alterações</button>
                 </div>
             </form>
         </div>
@@ -216,26 +238,28 @@
     <div id="modal-anexo" class="modal-overlay" style="display: none;">
         <div class="modal-box">
             <div class="modal-header">
-                <h3><i class="ph-fill ph-paperclip"></i> Anexar Documento Faltante</h3>
+                <h3><i class="ph-fill ph-paperclip"></i> Enviar Documento Digitalizado</h3>
                 <button class="btn-icon close-modal"><i class="ph ph-x"></i></button>
             </div>
             <div class="form-grid">
+                <input type="hidden" id="anexo-id-item">
+                <input type="hidden" id="anexo-tabela">
                 <div class="input-group" style="margin-bottom: 15px;">
                     <label>Referente a:</label>
                     <select id="tipo-anexo">
-                        <option value="Cavalo/Máquina">Cavalo / Caminhão Principal</option>
-                        <option value="Reboque 1" id="opt-reb1" style="display:none;">Reboque 1</option>
-                        <option value="Reboque 2" id="opt-reb2" style="display:none;">Reboque 2</option>
+                        <option value="principal">Cavalo / Máquina / Doc Pessoal</option>
+                        <option value="reboque1" id="opt-reb1" style="display:none;">Reboque 1</option>
+                        <option value="reboque2" id="opt-reb2" style="display:none;">Reboque 2</option>
                     </select>
                 </div>
                 <div class="input-group" style="margin-bottom: 20px;">
-                    <label>Arquivo (PDF ou Foto)</label>
+                    <label>Arquivo (PDF ou Foto legível)</label>
                     <input type="file" id="arquivo-upload" accept=".pdf,image/*">
                 </div>
             </div>
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button type="button" class="btn-outline close-modal">Cancelar</button>
-                <button type="button" class="btn-primary" onclick="simularEnvioAnexo()"><i class="ph-fill ph-upload-simple"></i> Fazer Upload</button>
+                <button type="button" class="btn-primary" onclick="realizarUploadDocumento()"><i class="ph-fill ph-upload-simple"></i> Enviar Arquivo</button>
             </div>
         </div>
     </div>
