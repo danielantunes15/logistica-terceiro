@@ -1,0 +1,211 @@
+:root {
+    --primary-color: #2B6CB0;
+    --primary-hover: #1A365D;
+    --bg-color: #F4F7FE;
+    --card-bg: #FFFFFF;
+    --text-main: #2D3748;
+    --text-muted: #718096;
+    --border-color: #E2E8F0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+}
+
+.header {
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.header-content {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary-color);
+}
+
+.logo-area h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.logo-area i {
+    font-size: 2rem;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+}
+
+.card h2 { margin-bottom: 5px; }
+.card p { color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem; }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.input-group input, .input-group select {
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    outline: none;
+    font-size: 0.95rem;
+    transition: border 0.2s;
+}
+
+.input-group input:focus, .input-group select:focus {
+    border-color: var(--primary-color);
+}
+
+.checklist {
+    background: #F7FAFC;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border: 1px dashed var(--border-color);
+}
+
+.checklist h4 { margin-bottom: 10px; font-size: 0.95rem; }
+.checklist label { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; cursor: pointer; }
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 15px;
+    transition: background 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+/* Estilos para a tela de Login e Tabelas */
+.login-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: var(--primary-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.login-box {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 400px;
+}
+
+.simple-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.simple-table th, .simple-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+
+.simple-table th {
+    background-color: var(--bg-color);
+    font-weight: 600;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #ED8936;
+    color: white;
+}

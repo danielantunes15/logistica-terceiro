@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal do Parceiro | Logística BEL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="login-container" class="login-overlay">
+        <div class="login-box">
+            <div class="logo-area" style="justify-content: center; margin-bottom: 20px;">
+                <i class="ph-fill ph-handshake" style="font-size: 3rem;"></i>
+            </div>
+            <h2 style="text-align: center; margin-bottom: 5px;">Acesso Restrito</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem;">Portal exclusivo para parceiros homologados.</p>
+            
+            <form id="form-login">
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label>Selecione sua Empresa</label>
+                    <select id="login-empresa" required>
+                        <option value="">Carregando empresas...</option>
+                    </select>
+                </div>
+                <div class="input-group" style="margin-bottom: 25px;">
+                    <label>Token de Acesso</label>
+                    <input type="password" id="login-token" placeholder="Digite o código fornecido pela usina" required>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 0;">Entrar no Sistema</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-container" style="display: none;">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-area">
+                    <i class="ph-fill ph-handshake"></i>
+                    <h1>Portal do Parceiro - BEL</h1>
+                </div>
+                <div class="user-info" style="display: flex; align-items: center; gap: 15px;">
+                    <span id="nome-empresa-logada" style="font-weight: 500;">Empresa</span>
+                    <button id="btn-sair" class="btn-outline" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 4px; border: 1px solid var(--border-color); cursor: pointer; background: transparent;"><i class="ph ph-sign-out"></i> Sair</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="container">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="equipamentos">Meus Equipamentos</button>
+                <button class="tab-btn" data-tab="funcionarios">Meus Funcionários</button>
+            </div>
+
+            <div id="equipamentos" class="tab-content active">
+                <div class="card" style="margin-bottom: 20px;">
+                    <h2>Pré-Cadastro de Equipamento</h2>
+                    <form id="form-equipamento">
+                        <div class="form-grid">
+                            <div class="input-group"><label>Placa/ID</label><input type="text" id="eq-placa" required></div>
+                            <div class="input-group"><label>Modelo</label><input type="text" id="eq-modelo" required></div>
+                            <div class="input-group"><label>Ano</label><input type="number" id="eq-ano" required></div>
+                        </div>
+                        <div class="input-group full-width" style="margin-top: 15px;"><label>Documento do Equipamento</label><input type="file" id="eq-doc" accept=".pdf,image/*"></div>
+                        <div class="checklist"><label><input type="checkbox" required> Declaro que os itens de segurança, freios e pneus foram revisados pela minha empresa.</label></div>
+                        <button type="submit" class="btn-primary">Enviar para Análise BEL</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>Status dos meus Equipamentos</h3>
+                    <table class="simple-table">
+                        <thead><tr><th>Placa</th><th>Modelo</th><th>Status na Usina</th></tr></thead>
+                        <tbody id="lista-meus-equipamentos"><tr><td colspan="3">Carregando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="funcionarios" class="tab-content">
+                <div class="card" style="margin-bottom: 20px;">
+                    <h2>Integração de Funcionário</h2>
+                    <form id="form-funcionario">
+                        <div class="form-grid">
+                            <div class="input-group"><label>Nome Completo</label><input type="text" id="func-nome" required></div>
+                            <div class="input-group"><label>CPF</label><input type="text" id="func-cpf" required></div>
+                            <div class="input-group"><label>Cargo</label><select id="func-cargo" required><option value="Motorista">Motorista</option><option value="Operador">Operador de Máquina</option></select></div>
+                        </div>
+                        <div class="input-group full-width" style="margin-top: 15px;"><label>Placa Vinculada</label><input type="text" id="func-placa-vinculada" required></div>
+                        <div class="input-group full-width" style="margin-top: 15px;"><label>CNH ou Certificado</label><input type="file" id="func-doc" accept=".pdf,image/*"></div>
+                        <button type="submit" class="btn-primary">Solicitar Integração</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>Status dos meus Funcionários</h3>
+                    <table class="simple-table">
+                        <thead><tr><th>Nome</th><th>Cargo</th><th>Status na Usina</th></tr></thead>
+                        <tbody id="lista-meus-funcionarios"><tr><td colspan="3">Carregando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
