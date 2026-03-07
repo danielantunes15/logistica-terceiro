@@ -1,14 +1,14 @@
 // ATENÇÃO: Substitua pelas MESMAS chaves do seu sistema interno!
-const SUPABASE_URL = 'SUA_URL_AQUI';
-const SUPABASE_KEY = 'SUA_ANON_KEY_AQUI';
+const SUPABASE_URL = 'https://uogorpanshybcuhdekhg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvZ29ycGFuc2h5YmN1aGRla2hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2MTcxNzYsImV4cCI6MjA3NTE5MzE3Nn0.LSGlAeeLZsPnEw3GtEXzY4D9f3UZhk7SXyBgrGYaKMg';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// MUDANÇA AQUI: Trocamos "supabase" por "supabaseClient"
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let parceiroLogado = null;
 
 // Inicialização da Página
 document.addEventListener('DOMContentLoaded', async () => {
-    // Verifica se já está logado
     const sessionStr = localStorage.getItem('bel_parceiro_session');
     if (sessionStr) {
         parceiroLogado = JSON.parse(sessionStr);
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function carregarEmpresasNoLogin() {
     const select = document.getElementById('login-empresa');
     try {
-        const { data, error } = await supabase.from('proprietarios').select('id, nome').order('nome');
+        const { data, error } = await supabaseClient.from('proprietarios').select('id, nome').order('nome');
         if (error) throw error;
         
         select.innerHTML = '<option value="">Selecione sua empresa...</option>' + 
@@ -44,19 +44,15 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
     btn.disabled = true;
 
     try {
-        // Busca a empresa que tenha aquele ID e aquele Token
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('proprietarios')
             .select('id, nome')
             .eq('id', empresaId)
             .eq('token_acesso', token)
-            .single(); // Espera apenas 1 resultado exato
+            .single();
 
-        if (error || !data) {
-            throw new Error('Empresa ou token inválidos.');
-        }
+        if (error || !data) throw new Error('Empresa ou token inválidos.');
 
-        // Sucesso no login
         parceiroLogado = data;
         localStorage.setItem('bel_parceiro_session', JSON.stringify(data));
         mostrarPortal();
@@ -97,11 +93,11 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     });
 });
 
-// 5. Cadastrar Equipamento (Usando ID Logado)
+// 5. Cadastrar Equipamento
 document.getElementById('form-equipamento').addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
-        await supabase.from('terceiros_equipamentos').insert([{ 
+        await supabaseClient.from('terceiros_equipamentos').insert([{ 
             proprietario_id: parceiroLogado.id,
             placa: document.getElementById('eq-placa').value,
             modelo: document.getElementById('eq-modelo').value,
@@ -109,15 +105,15 @@ document.getElementById('form-equipamento').addEventListener('submit', async (e)
         }]);
         alert('Enviado com sucesso!');
         e.target.reset();
-        carregarMeusEquipamentos(); // Recarrega a tabela
+        carregarMeusEquipamentos();
     } catch (err) { alert('Erro ao cadastrar.'); }
 });
 
-// 6. Cadastrar Funcionário (Usando ID Logado)
+// 6. Cadastrar Funcionário
 document.getElementById('form-funcionario').addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
-        await supabase.from('terceiros_funcionarios').insert([{ 
+        await supabaseClient.from('terceiros_funcionarios').insert([{ 
             proprietario_id: parceiroLogado.id,
             nome: document.getElementById('func-nome').value,
             cpf: document.getElementById('func-cpf').value,
@@ -126,14 +122,14 @@ document.getElementById('form-funcionario').addEventListener('submit', async (e)
         }]);
         alert('Enviado com sucesso!');
         e.target.reset();
-        carregarMeusFuncionarios(); // Recarrega a tabela
+        carregarMeusFuncionarios();
     } catch (err) { alert('Erro ao cadastrar.'); }
 });
 
 // 7. Buscar Listas do Banco de Dados
 async function carregarMeusEquipamentos() {
     const tbody = document.getElementById('lista-meus-equipamentos');
-    const { data } = await supabase.from('terceiros_equipamentos').select('*').eq('proprietario_id', parceiroLogado.id);
+    const { data } = await supabaseClient.from('terceiros_equipamentos').select('*').eq('proprietario_id', parceiroLogado.id);
     if (data && data.length > 0) {
         tbody.innerHTML = data.map(eq => `<tr><td>${eq.placa}</td><td>${eq.modelo}</td><td><span class="status-badge">${eq.status}</span></td></tr>`).join('');
     } else {
@@ -143,7 +139,7 @@ async function carregarMeusEquipamentos() {
 
 async function carregarMeusFuncionarios() {
     const tbody = document.getElementById('lista-meus-funcionarios');
-    const { data } = await supabase.from('terceiros_funcionarios').select('*').eq('proprietario_id', parceiroLogado.id);
+    const { data } = await supabaseClient.from('terceiros_funcionarios').select('*').eq('proprietario_id', parceiroLogado.id);
     if (data && data.length > 0) {
         tbody.innerHTML = data.map(f => `<tr><td>${f.nome}</td><td>${f.cargo}</td><td><span class="status-badge">${f.status}</span></td></tr>`).join('');
     } else {
