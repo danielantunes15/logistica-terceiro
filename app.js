@@ -83,23 +83,33 @@ function mostrarPortal() {
 }
 
 // ==========================================================
-// UPLOAD DE ARQUIVOS (Supabase Storage)
+// UPLOAD DE ARQUIVOS (Supabase Storage) - CORRIGIDO
 // ==========================================================
 async function fazerUploadParaStorage(arquivo, pastaDestino) {
     if (!arquivo) return null;
     try {
         const fileExt = arquivo.name.split('.').pop();
-        const fileName = `${pastaDestino}_${Date.now()}.${fileExt}`;
+        // Limpa espaços e caracteres especiais do nome para evitar erro de URL
+        const cleanDestino = pastaDestino.replace(/[^a-zA-Z0-9]/g, '_');
+        const fileName = `${cleanDestino}_${Date.now()}.${fileExt}`;
         const filePath = `${parceiroLogado.id}/${fileName}`;
         
-        const { error } = await supabaseClient.storage.from('documentos_logistica').upload(filePath, arquivo);
+        // CORREÇÃO: Usando o MESMO bucket do sistema principal (documentos_terceiros)
+        const { error } = await supabaseClient.storage
+            .from('documentos_terceiros')
+            .upload(filePath, arquivo);
+            
         if (error) throw error;
         
-        const { data } = supabaseClient.storage.from('documentos_logistica').getPublicUrl(filePath);
+        const { data } = supabaseClient.storage
+            .from('documentos_terceiros')
+            .getPublicUrl(filePath);
+            
         return data.publicUrl;
     } catch (e) {
-        console.warn("Aviso de Storage: O upload falhou.", e);
-        return 'upload_pendente_ou_simulado'; 
+        console.error("Erro detalhado do Storage:", e);
+        // CORREÇÃO: Agora o sistema vai travar e mostrar o erro real na tela
+        throw new Error('Falha no upload do documento. Verifique as configurações do Storage no Supabase.'); 
     }
 }
 
@@ -159,22 +169,28 @@ document.getElementById('form-equipamento').addEventListener('submit', async (e)
         if (categoria === 'Rodotrem' && (!reb1 || !fileR1)) statusFinal = 'Cadastro Incompleto';
         if (categoria === 'Treminhão' && (!reb1 || !reb2 || !fileR1 || !fileR2)) statusFinal = 'Cadastro Incompleto';
 
-        await fazerUploadParaStorage(filePrincipal, `doc_${placa}`);
-        if (fileR1) await fazerUploadParaStorage(fileR1, `doc_${reb1}`);
-        if (fileR2) await fazerUploadParaStorage(fileR2, `doc_${reb2}`);
+        const urlPrincipal = await fazerUploadParaStorage(filePrincipal, `doc_${placa}`);
+        let urlR1 = null, urlR2 = null;
+        
+        if (fileR1) urlR1 = await fazerUploadParaStorage(fileR1, `doc_${reb1}`);
+        if (fileR2) urlR2 = await fazerUploadParaStorage(fileR2, `doc_${reb2}`);
 
         const payload = { 
             proprietario_id: parceiroLogado.id,
             placa: placa,
             descricao: `[${categoria}] ${modelo}`,
             status_homologacao: statusFinal,
-            situacao: 'inativo' 
+            situacao: 'inativo',
+            documento_url: urlPrincipal // Salvando a URL principal
         };
 
         if (isCaminhao) {
             payload.configuracao = categoria;
             payload.reboque1_placa = reb1 || null;
             payload.reboque2_placa = reb2 || null;
+            // Se você tiver colunas no banco para os documentos dos reboques, adicione-os aqui
+            // payload.reboque1_doc = urlR1;
+            // payload.reboque2_doc = urlR2;
         }
 
         const { error } = await supabaseClient.from(tabelaDestino).insert([payload]);
@@ -204,7 +220,7 @@ document.getElementById('form-funcionario').addEventListener('submit', async (e)
     btn.disabled = true; btn.innerHTML = '<i class="ph-fill ph-spinner-gap ph-spin"></i> Processando...';
 
     try {
-        await fazerUploadParaStorage(docAnexado, `func_${document.getElementById('func-cpf').value}`);
+        const docUrl = await fazerUploadParaStorage(docAnexado, `func_${document.getElementById('func-cpf').value}`);
 
         const { error } = await supabaseClient.from('terceiros').insert([{ 
             empresa_id: parceiroLogado.id,
@@ -212,7 +228,8 @@ document.getElementById('form-funcionario').addEventListener('submit', async (e)
             cpf_cnpj: document.getElementById('func-cpf').value,
             descricao_atividade: document.getElementById('func-cargo').value,
             status_homologacao: docAnexado ? 'Falta Integração' : 'Cadastro Incompleto',
-            situacao: 'inativo' 
+            situacao: 'inativo',
+            documento_url: docUrl
         }]);
         
         if (error) throw error;
@@ -434,16 +451,30 @@ window.abrirModalAnexo = function(id, tabela, configuracao) {
 window.realizarUploadDocumento = async function() {
     const input = document.getElementById('arquivo-upload');
     const file = input.files[0];
+    const tabela = document.getElementById('anexo-tabela').value;
+    const idItem = document.getElementById('anexo-id-item').value;
+    
     if (!file) {
         Swal.fire('Atenção', 'Selecione um arquivo primeiro.', 'info');
         return;
     }
 
-    await fazerUploadParaStorage(file, `doc_extra_${Date.now()}`);
+    try {
+        const urlDoc = await fazerUploadParaStorage(file, `doc_extra_${Date.now()}`);
+        
+        // Atualiza a URL do documento extra no banco (para enviar o arquivo pra você)
+        await supabaseClient.from(tabela).update({
+            documento_url: urlDoc,
+            status_homologacao: 'Pendente Vistoria'
+        }).eq('id', idItem);
 
-    Swal.fire('Sucesso', 'Documento enviado para análise da Usina.', 'success');
-    input.value = '';
-    document.getElementById('modal-anexo').style.display = 'none';
+        Swal.fire('Sucesso', 'Documento enviado para análise da Usina.', 'success');
+        input.value = '';
+        document.getElementById('modal-anexo').style.display = 'none';
+        carregarDadosBase();
+    } catch (err) {
+        Swal.fire('Erro', err.message, 'error');
+    }
 }
 
 window.abrirModalEdicao = function(id, tabela, ident, detalhe, config, reb1, reb2) {
@@ -536,7 +567,7 @@ document.getElementById('form-renovacao').addEventListener('submit', async (e) =
     btn.innerHTML = '<i class="ph-fill ph-spinner-gap ph-spin"></i> Processando...';
     
     try {
-        // Envia o arquivo para o banco
+        // Envia o arquivo para o banco e pega a URL real
         const urlDocumento = await fazerUploadParaStorage(file, `${tipo}_renovacao_${id}`);
         
         // Define para onde o item vai na sua tela de Triagem
@@ -555,7 +586,8 @@ document.getElementById('form-renovacao').addEventListener('submit', async (e) =
         carregarDadosBase();
     } catch (error) {
         console.error('Erro na renovação:', error);
-        Swal.fire('Erro', 'Falha ao enviar documento.', 'error');
+        // O Erro customizado do catch anterior será mostrado aqui pro usuário!
+        Swal.fire('Erro', error.message || 'Falha ao enviar documento.', 'error');
     } finally {
         btn.disabled = false; 
         btn.innerHTML = '<i class="ph-fill ph-paper-plane-right"></i> Enviar para Aprovação';
