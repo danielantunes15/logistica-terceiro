@@ -264,6 +264,32 @@
         </div>
     </div>
 
+    <div id="modal-renovacao" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="ph-fill ph-arrows-clockwise"></i> Renovar e Desbloquear</h3>
+                <button class="btn-icon close-modal"><i class="ph ph-x"></i></button>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">
+                Anexe a documentação atualizada (CRLV, CNH, ASO, etc.) para solicitar o desbloqueio deste item para a nova safra.
+            </p>
+            <form id="form-renovacao">
+                <input type="hidden" id="renovacao-id">
+                <input type="hidden" id="renovacao-tipo">
+                
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <label>Documento Atualizado (PDF ou Foto)</label>
+                    <input type="file" id="arquivo-renovacao" accept=".pdf,image/*" required>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn-outline close-modal">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btn-submit-renovacao"><i class="ph-fill ph-paper-plane-right"></i> Enviar para Aprovação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

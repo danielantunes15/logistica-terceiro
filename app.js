@@ -85,7 +85,6 @@ function mostrarPortal() {
 // ==========================================================
 // UPLOAD DE ARQUIVOS (Supabase Storage)
 // ==========================================================
-// NOTA: Para funcionar 100%, você deve criar um Bucket chamado "documentos_logistica" no seu Supabase.
 async function fazerUploadParaStorage(arquivo, pastaDestino) {
     if (!arquivo) return null;
     try {
@@ -93,15 +92,14 @@ async function fazerUploadParaStorage(arquivo, pastaDestino) {
         const fileName = `${pastaDestino}_${Date.now()}.${fileExt}`;
         const filePath = `${parceiroLogado.id}/${fileName}`;
         
-        // Tenta enviar. Se o bucket não existir, o erro cairá no catch.
         const { error } = await supabaseClient.storage.from('documentos_logistica').upload(filePath, arquivo);
         if (error) throw error;
         
         const { data } = supabaseClient.storage.from('documentos_logistica').getPublicUrl(filePath);
         return data.publicUrl;
     } catch (e) {
-        console.warn("Aviso de Storage: O upload falhou. Verifique se o bucket 'documentos_logistica' está criado e público.", e);
-        return 'upload_pendente_ou_simulado'; // Retorno seguro para o cadastro não travar se o Storage não estiver configurado.
+        console.warn("Aviso de Storage: O upload falhou.", e);
+        return 'upload_pendente_ou_simulado'; 
     }
 }
 
@@ -161,7 +159,6 @@ document.getElementById('form-equipamento').addEventListener('submit', async (e)
         if (categoria === 'Rodotrem' && (!reb1 || !fileR1)) statusFinal = 'Cadastro Incompleto';
         if (categoria === 'Treminhão' && (!reb1 || !reb2 || !fileR1 || !fileR2)) statusFinal = 'Cadastro Incompleto';
 
-        // Lógica de Upload Assíncrono Seguro
         await fazerUploadParaStorage(filePrincipal, `doc_${placa}`);
         if (fileR1) await fazerUploadParaStorage(fileR1, `doc_${reb1}`);
         if (fileR2) await fazerUploadParaStorage(fileR2, `doc_${reb2}`);
@@ -270,7 +267,6 @@ function atualizarInterface() {
     const equipeAtiva = dadosEquipeGlobais.filter(f => isAtivo(f));
     const equipePendente = dadosEquipeGlobais.filter(f => !isAtivo(f));
 
-    // Atualizar KPIs do Dashboard
     document.getElementById('kpi-frota-ativa').textContent = frotaAtiva.length;
     document.getElementById('kpi-frota-pendente').textContent = frotaPendente.length;
     document.getElementById('kpi-equipe-total').textContent = equipeAtiva.length;
@@ -282,11 +278,9 @@ function atualizarInterface() {
     renderListaEquipe(equipeAtiva, 'lista-equipe-ativa');
 }
 
-// Lógica de Filtros
 document.getElementById('busca-frota-pendente').addEventListener('input', atualizarInterface);
 document.getElementById('busca-frota-ativa').addEventListener('input', atualizarInterface);
 
-// Renderizadores de HTML
 function renderListaFrota(dados, containerId, filtro = '') {
     const container = document.getElementById(containerId);
     
@@ -318,6 +312,8 @@ function renderListaFrota(dados, containerId, filtro = '') {
         }
 
         const classStatus = getStatusClass(item.status_homologacao);
+        const isBlocked = item.situacao === 'inativo' || item.status_homologacao === 'Bloqueado';
+        const btnRenovar = isBlocked ? `<button class="btn-icon" title="Renovar e Desbloquear" style="color: var(--primary-color); border-color: var(--primary-color);" onclick="abrirModalRenovacao('${item._tabela}', '${item.id}')"><i class="ph ph-arrows-clockwise"></i></button>` : '';
 
         return `
         <div class="list-item ${classStatus}">
@@ -332,6 +328,7 @@ function renderListaFrota(dados, containerId, filtro = '') {
             </div>
             <div class="item-status">${renderBadge(item.status_homologacao)}</div>
             <div class="item-actions">
+                ${btnRenovar}
                 <button class="btn-icon" title="Atualizar Dados" onclick="abrirModalEdicao('${item.id}', '${item._tabela}', '${item.placa}', '${desc}', '${conf}', '${item.reboque1_placa || ''}', '${item.reboque2_placa || ''}')"><i class="ph ph-pencil-simple"></i></button>
                 <button class="btn-icon" title="Anexar Doc Pendente" onclick="abrirModalAnexo('${item.id}', '${item._tabela}', '${conf}')"><i class="ph ph-paperclip"></i></button>
                 <button class="btn-icon danger" title="Remover da Operação" onclick="excluirItem('${item.id}', '${item._tabela}')"><i class="ph ph-trash"></i></button>
@@ -347,29 +344,35 @@ function renderListaEquipe(dados, containerId) {
         return;
     }
 
-    container.innerHTML = dados.map(f => `
-    <div class="list-item ${getStatusClass(f.status_homologacao)}">
-        <div class="item-main">
-            <div class="item-icon" style="color: #3B82F6;"><i class="ph-fill ph-user-gear"></i></div>
-            <div class="item-details">
-                <span class="item-tag">${f.descricao_atividade || 'Colaborador'}</span>
-                <span class="item-title">${f.nome}</span>
-                <span class="item-subtitle">CPF: ${f.cpf_cnpj || 'Não informado'}</span>
+    container.innerHTML = dados.map(f => {
+        const isBlocked = f.situacao === 'inativo' || f.status_homologacao === 'Bloqueado';
+        const btnRenovar = isBlocked ? `<button class="btn-icon" title="Renovar e Desbloquear" style="color: var(--primary-color); border-color: var(--primary-color);" onclick="abrirModalRenovacao('terceiros', '${f.id}')"><i class="ph ph-arrows-clockwise"></i></button>` : '';
+
+        return `
+        <div class="list-item ${getStatusClass(f.status_homologacao)}">
+            <div class="item-main">
+                <div class="item-icon" style="color: #3B82F6;"><i class="ph-fill ph-user-gear"></i></div>
+                <div class="item-details">
+                    <span class="item-tag">${f.descricao_atividade || 'Colaborador'}</span>
+                    <span class="item-title">${f.nome}</span>
+                    <span class="item-subtitle">CPF: ${f.cpf_cnpj || 'Não informado'}</span>
+                </div>
             </div>
-        </div>
-        <div class="item-status">${renderBadge(f.status_homologacao)}</div>
-        <div class="item-actions">
-            <button class="btn-icon" title="Editar" onclick="abrirModalEdicao('${f.id}', 'terceiros', '${f.nome}', '${f.descricao_atividade}', '', '', '')"><i class="ph ph-pencil-simple"></i></button>
-            <button class="btn-icon danger" title="Desvincular" onclick="excluirItem('${f.id}', 'terceiros')"><i class="ph ph-trash"></i></button>
-        </div>
-    </div>`).join('');
+            <div class="item-status">${renderBadge(f.status_homologacao)}</div>
+            <div class="item-actions">
+                ${btnRenovar}
+                <button class="btn-icon" title="Editar" onclick="abrirModalEdicao('${f.id}', 'terceiros', '${f.nome}', '${f.descricao_atividade}', '', '', '')"><i class="ph ph-pencil-simple"></i></button>
+                <button class="btn-icon danger" title="Desvincular" onclick="excluirItem('${f.id}', 'terceiros')"><i class="ph ph-trash"></i></button>
+            </div>
+        </div>`;
+    }).join('');
 }
 
 // Helpers Visuais
 function getStatusClass(v = '') {
     if (v.includes('Apto') || v.includes('Ativo') || v.includes('Integrado')) return 'status-apto';
     if (v.includes('Incompleto')) return 'status-incompleto';
-    if (v.includes('Inativo') || v.includes('Falta')) return 'status-inativo';
+    if (v.includes('Inativo') || v.includes('Falta') || v.includes('Bloqueado')) return 'status-inativo';
     return 'status-pendente';
 }
 
@@ -379,7 +382,7 @@ function renderBadge(v = 'Pendente') {
         bg = 'rgba(16, 185, 129, 0.1)'; color = 'var(--success)'; border = '#6EE7B7';
     } else if (v.includes('Incompleto')) {
         bg = 'rgba(148, 163, 184, 0.1)'; color = '#64748B'; border = '#CBD5E1'; 
-    } else if (v.includes('Inativo') || v.includes('Falta')) {
+    } else if (v.includes('Inativo') || v.includes('Falta') || v.includes('Bloqueado')) {
         bg = 'rgba(239, 68, 68, 0.1)'; color = 'var(--danger)'; border = '#FCA5A5';
     }
     return `<span class="status-badge" style="background: ${bg}; color: ${color}; border: 1px solid ${border};">${v}</span>`;
@@ -414,7 +417,6 @@ window.excluirItem = function(id, tabela) {
     });
 }
 
-// Modal de Anexos Faltantes
 window.abrirModalAnexo = function(id, tabela, configuracao) {
     document.getElementById('anexo-id-item').value = id;
     document.getElementById('anexo-tabela').value = tabela;
@@ -437,7 +439,6 @@ window.realizarUploadDocumento = async function() {
         return;
     }
 
-    // Aqui você faria o update da URL no Supabase para aquele ID/Tabela.
     await fazerUploadParaStorage(file, `doc_extra_${Date.now()}`);
 
     Swal.fire('Sucesso', 'Documento enviado para análise da Usina.', 'success');
@@ -445,7 +446,6 @@ window.realizarUploadDocumento = async function() {
     document.getElementById('modal-anexo').style.display = 'none';
 }
 
-// Modal de Edição (Placas Faltantes, etc)
 window.abrirModalEdicao = function(id, tabela, ident, detalhe, config, reb1, reb2) {
     document.getElementById('edit-id').value = id;
     document.getElementById('edit-tabela').value = tabela;
@@ -509,4 +509,55 @@ document.getElementById('form-edicao').addEventListener('submit', async (e) => {
         Swal.fire('Salvo!', 'Dados logísticos atualizados com sucesso.', 'success');
         carregarDadosBase();
     } catch (err) { Swal.fire('Erro', 'Falha ao atualizar registro.', 'error'); }
+});
+
+// ==========================================================
+// RENOVAÇÃO E DESBLOQUEIO DE SAFRA
+// ==========================================================
+window.abrirModalRenovacao = function(tipoTabela, idItem) {
+    document.getElementById('renovacao-id').value = idItem;
+    document.getElementById('renovacao-tipo').value = tipoTabela;
+    document.getElementById('arquivo-renovacao').value = '';
+    document.getElementById('modal-renovacao').style.display = 'flex';
+}
+
+document.getElementById('form-renovacao').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const btn = document.getElementById('btn-submit-renovacao');
+    const id = document.getElementById('renovacao-id').value;
+    const tipo = document.getElementById('renovacao-tipo').value;
+    const fileInput = document.getElementById('arquivo-renovacao');
+    const file = fileInput.files[0];
+    
+    if (!file) return;
+
+    btn.disabled = true; 
+    btn.innerHTML = '<i class="ph-fill ph-spinner-gap ph-spin"></i> Processando...';
+    
+    try {
+        // Envia o arquivo para o banco
+        const urlDocumento = await fazerUploadParaStorage(file, `${tipo}_renovacao_${id}`);
+        
+        // Define para onde o item vai na sua tela de Triagem
+        const novoStatusHomologacao = tipo === 'terceiros' ? 'Falta Integração' : 'Pendente Vistoria';
+        
+        const { error } = await supabaseClient.from(tipo).update({
+            documento_url: urlDocumento,
+            situacao: 'ativo', 
+            status_homologacao: novoStatusHomologacao
+        }).eq('id', id);
+
+        if (error) throw error;
+
+        Swal.fire('Enviado!', 'Documentação enviada. O item está em análise pela usina.', 'success');
+        document.getElementById('modal-renovacao').style.display = 'none';
+        carregarDadosBase();
+    } catch (error) {
+        console.error('Erro na renovação:', error);
+        Swal.fire('Erro', 'Falha ao enviar documento.', 'error');
+    } finally {
+        btn.disabled = false; 
+        btn.innerHTML = '<i class="ph-fill ph-paper-plane-right"></i> Enviar para Aprovação';
+    }
 });
